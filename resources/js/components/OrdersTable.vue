@@ -104,7 +104,7 @@
                         <tbody>
                             <tr v-for="order in orders" :key="order.id">
                                 <td>{{ order.order_date }}</td>
-                                <td>{{ order.full_name }}</td>
+                                <td>{{ order.last_name }} {{ order.first_name }} {{ order.middle_name }}</td>
                                 <td>{{ order.phone }}</td>
                                 <td>{{ order.inn }}</td>
                                 <td>{{ order.company_name }}</td>
