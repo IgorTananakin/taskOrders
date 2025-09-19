@@ -12,11 +12,6 @@ use Carbon\Carbon;
 
 class OrderController extends Controller
 {
-    
-    /**
-     * получение списка заказов с фильтрацией по статусу
-     * GET /api/orders?date=...&status=...
-     */
     public function index(Request $request)
     {
         $query = Order::with(['products', 'user'])
@@ -26,26 +21,24 @@ class OrderController extends Controller
             $query->where('status', $request->status);
         }
 
-        //по дате
         if ($request->has('date') && $request->date) {
             $query->whereDate('order_date', $request->date);
         }
 
-        //по дате от
         if ($request->has('date_from') && $request->date_from) {
             $query->whereDate('order_date', '>=', $request->date_from);
         }
 
-        //по дате до
         if ($request->has('date_to') && $request->date_to) {
             $query->whereDate('order_date', '<=', $request->date_to);
         }
 
-        //поиск
         if ($request->has('search') && $request->search) {
             $searchTerm = '%' . $request->search . '%';
             $query->where(function($q) use ($searchTerm) {
-                $q->where('full_name', 'like', $searchTerm)
+                $q->where('last_name', 'like', $searchTerm)
+                  ->orWhere('first_name', 'like', $searchTerm)
+                  ->orWhere('middle_name', 'like', $searchTerm)
                   ->orWhere('phone', 'like', $searchTerm)
                   ->orWhere('email', 'like', $searchTerm)
                   ->orWhere('inn', 'like', $searchTerm)
@@ -59,12 +52,14 @@ class OrderController extends Controller
 
         $orders = $query->paginate($request->per_page ?? 10);
 
-        //форматируем даты
         $formattedOrders = collect($orders->items())->map(function ($order) {
             return [
                 'id' => $order->id,
                 'user_id' => $order->user_id,
-                'full_name' => $order->full_name,
+                'last_name' => $order->last_name,
+                'first_name' => $order->first_name,
+                'middle_name' => $order->middle_name,
+                'full_name' => trim($order->last_name . ' ' . $order->first_name . ' ' . $order->middle_name),
                 'phone' => $order->phone,
                 'email' => $order->email,
                 'inn' => $order->inn,
@@ -101,14 +96,12 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Создание нового заказа
-     * POST /api/orders
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'full_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|max:255',
             'inn' => 'required|string|max:12|min:10',
@@ -130,10 +123,11 @@ class OrderController extends Controller
 
         try {
             return DB::transaction(function () use ($request) {
-
                 $order = Order::create([
                     'user_id' => auth()->id() ?? null,
-                    'full_name' => $request->full_name,
+                    'last_name' => $request->last_name,
+                    'first_name' => $request->first_name,
+                    'middle_name' => $request->middle_name,
                     'phone' => $request->phone,
                     'email' => $request->email,
                     'inn' => $request->inn,
@@ -144,7 +138,6 @@ class OrderController extends Controller
                 ]);
 
                 foreach ($request->products as $productData) {
-
                     if (empty($productData['name']) || empty($productData['quantity'])) {
                         continue;
                     }
@@ -166,13 +159,15 @@ class OrderController extends Controller
                     throw new \Exception('Необходимо добавить хотя бы один товар');
                 }
 
-                //загружаем данные заказа с товарами
                 $order->load('products');
 
                 $formattedOrder = [
                     'id' => $order->id,
                     'user_id' => $order->user_id,
-                    'full_name' => $order->full_name,
+                    'last_name' => $order->last_name,
+                    'first_name' => $order->first_name,
+                    'middle_name' => $order->middle_name,
+                    'full_name' => trim($order->last_name . ' ' . $order->first_name . ' ' . $order->middle_name),
                     'phone' => $order->phone,
                     'email' => $order->email,
                     'inn' => $order->inn,
@@ -208,27 +203,24 @@ class OrderController extends Controller
         }
     }
 
-    /**
-    * получение статистики по заказам
-    * GET /api/orders/statistics
-    */
     public function statistics(Request $request)
     {
         $query = Order::query();
 
-        // Применяем фильтры, если они переданы
         if ($request->has('search') && $request->search) {
             $searchTerm = '%' . $request->search . '%';
             $query->where(function($q) use ($searchTerm) {
-                $q->where('full_name', 'like', $searchTerm)
-                ->orWhere('phone', 'like', $searchTerm)
-                ->orWhere('email', 'like', $searchTerm)
-                ->orWhere('inn', 'like', $searchTerm)
-                ->orWhere('company_name', 'like', $searchTerm)
-                ->orWhere('address', 'like', $searchTerm)
-                ->orWhereHas('products', function($q) use ($searchTerm) {
-                    $q->where('name', 'like', $searchTerm);
-                });
+                $q->where('last_name', 'like', $searchTerm)
+                  ->orWhere('first_name', 'like', $searchTerm)
+                  ->orWhere('middle_name', 'like', $searchTerm)
+                  ->orWhere('phone', 'like', $searchTerm)
+                  ->orWhere('email', 'like', $searchTerm)
+                  ->orWhere('inn', 'like', $searchTerm)
+                  ->orWhere('company_name', 'like', $searchTerm)
+                  ->orWhere('address', 'like', $searchTerm)
+                  ->orWhereHas('products', function($q) use ($searchTerm) {
+                      $q->where('name', 'like', $searchTerm);
+                  });
             });
         }
 
@@ -236,22 +228,18 @@ class OrderController extends Controller
             $query->where('status', $request->status);
         }
 
-        //по дате от
         if ($request->has('date_from') && $request->date_from) {
             $query->whereDate('order_date', '>=', $request->date_from);
         }
 
-        //по дате до
         if ($request->has('date_to') && $request->date_to) {
             $query->whereDate('order_date', '<=', $request->date_to);
         }
 
-        //по конкретной дате
         if ($request->has('date') && $request->date) {
             $query->whereDate('order_date', $request->date);
         }
 
-        //получаем статистику
         $total = $query->count();
         $new = $query->clone()->where('status', 'new')->count();
         $inProgress = $query->clone()->where('status', 'in_progress')->count();
@@ -264,5 +252,4 @@ class OrderController extends Controller
             'completed' => $completed
         ]);
     }
-
 }

@@ -9,10 +9,6 @@ use Carbon\Carbon;
 
 class CustomerController extends Controller
 {
-    /**
-     * Поиск клиента по номеру телефона
-     * GET /api/customers?phone=...
-     */
     public function searchByPhone(Request $request)
     {
         $request->validate([
@@ -21,7 +17,6 @@ class CustomerController extends Controller
 
         $phone = $request->input('phone');
         
-        //заказы по номеру телефона
         $orders = Order::where('phone', 'like', '%' . $phone . '%')
             ->orderBy('order_date', 'desc')
             ->get();
@@ -37,7 +32,10 @@ class CustomerController extends Controller
         $lastOrder = $orders->first();
         
         $customer = [
-            'full_name' => $lastOrder->full_name,
+            'last_name' => $lastOrder->last_name,
+            'first_name' => $lastOrder->first_name,
+            'middle_name' => $lastOrder->middle_name,
+            'full_name' => trim($lastOrder->last_name . ' ' . $lastOrder->first_name . ' ' . $lastOrder->middle_name),
             'phone' => $lastOrder->phone,
             'email' => $lastOrder->email,
             'inn' => $lastOrder->inn,

@@ -20,12 +20,15 @@ class OrderSeeder extends Seeder
         for ($i = 0; $i < 50; $i++) {
             $user = $users->random();
             $status = $statuses[array_rand($statuses)];
-            
             $orderDate = Carbon::now()->subDays(rand(0, 30));
+            
+            $nameParts = $this->generateRandomName();
             
             $order = Order::create([
                 'user_id' => $user->id,
-                'full_name' => $this->generateRandomName(),
+                'last_name' => $nameParts['last_name'],
+                'first_name' => $nameParts['first_name'],
+                'middle_name' => $nameParts['middle_name'],
                 'phone' => $this->generateRandomPhone(),
                 'email' => $this->generateRandomEmail(),
                 'inn' => $this->generateRandomInn(),
@@ -58,11 +61,13 @@ class OrderSeeder extends Seeder
     {
         $lastNames = ['Иванов', 'Петров', 'Сидоров', 'Кузнецов', 'Смирнов', 'Попов', 'Васильев'];
         $firstNames = ['Иван', 'Петр', 'Алексей', 'Дмитрий', 'Сергей', 'Андрей', 'Михаил'];
-        $middleNames = ['Иванович', 'Петрович', 'Алексеевич', 'Дмитриевич', 'Сергеевич'];
+        $middleNames = ['Иванович', 'Петрович', 'Алексеевич', 'Дмитриевич', 'Сергеевич', 'Михайлович'];
         
-        return $lastNames[array_rand($lastNames)] . ' ' . 
-               $firstNames[array_rand($firstNames)] . ' ' . 
-               $middleNames[array_rand($middleNames)];
+        return [
+            'last_name' => $lastNames[array_rand($lastNames)],
+            'first_name' => $firstNames[array_rand($firstNames)],
+            'middle_name' => $middleNames[array_rand($middleNames)]
+        ];
     }
     
     private function generateRandomPhone()

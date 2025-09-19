@@ -13,7 +13,9 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'full_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|max:255',
             'inn' => 'required|string|max:12|min:10',
@@ -27,10 +29,11 @@ class OrderController extends Controller
         ]);
 
         return DB::transaction(function () use ($validated) {
-
             $order = Order::create([
                 'user_id' => Auth::id(),
-                'full_name' => $validated['full_name'],
+                'last_name' => $validated['last_name'],
+                'first_name' => $validated['first_name'],
+                'middle_name' => $validated['middle_name'] ?? null,
                 'phone' => $validated['phone'],
                 'email' => $validated['email'],
                 'inn' => $validated['inn'],
@@ -40,9 +43,7 @@ class OrderController extends Controller
                 'order_date' => now(),
             ]);
 
-            // Добавляем товары к заказу
             foreach ($validated['products'] as $productData) {
-                //пропуск пустых
                 if (empty($productData['name']) || empty($productData['quantity'])) {
                     continue;
                 }

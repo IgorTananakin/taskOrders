@@ -11,14 +11,16 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('full_name'); // ФИО
-            $table->string('phone'); // телефон
-            $table->string('email'); // почта
-            $table->string('inn'); // ИНН
-            $table->string('company_name'); // Название компании
-            $table->text('address'); // Адрес
-            $table->enum('status', ['new', 'in_progress', 'completed', 'cancelled'])->default('new'); // статус
-            $table->date('order_date'); // дата заказа
+            $table->string('last_name');
+            $table->string('first_name');
+            $table->string('middle_name')->nullable();
+            $table->string('phone'); 
+            $table->string('email'); 
+            $table->string('inn'); 
+            $table->string('company_name'); 
+            $table->text('address'); 
+            $table->enum('status', ['new', 'in_progress', 'completed', 'cancelled'])->default('new'); 
+            $table->date('order_date'); 
             $table->timestamps();
         });
     }

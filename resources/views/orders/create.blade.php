@@ -51,10 +51,22 @@
                 <form action="/orders" method="POST">
                     @csrf
                     
-                    <div class="mb-3">
-                        <label for="full_name" class="form-label">ФИО *</label>
-                        <input type="text" class="form-control" id="full_name" name="full_name" 
-                               value="{{ old('full_name') }}" required>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Фамилия *</label>
+                            <input type="text" class="form-control" name="last_name" 
+                                value="{{ old('last_name') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Имя *</label>
+                            <input type="text" class="form-control" name="first_name" 
+                                value="{{ old('first_name') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Отчество</label>
+                            <input type="text" class="form-control" name="middle_name" 
+                                value="{{ old('middle_name') }}">
+                        </div>
                     </div>
 
                     <div class="mb-3">
